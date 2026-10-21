@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Y214 Home</title>
+<style>
+  :root { --void:#0b1320; --text:#e8f1ff; --muted:#8aa0c0; --primary:#00c2d1; --err:#ff6b6b; }
+  html,body { margin:0; height:100%; background:var(--void); color:var(--text); font-family:Samsung One, Segoe UI, sans-serif; }
+  main { height:100%; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:1.2vw; }
+  h1 { font-size:4.2vw; margin:0; letter-spacing:.05em; }
+  h1 b { color:var(--primary); }
+  p { font-size:1.8vw; margin:0; color:var(--muted); }
+  #err { color:var(--err); display:none; text-align:center; }
+  button { font-size:2vw; padding:.6vw 2.4vw; border-radius:.6vw; border:0; background:var(--primary); color:var(--void); }
+</style>
+</head>
+<body>
+<main>
+  <h1>Y214 <b>Home</b></h1>
+  <p id="msg">Opening Home Assistant…</p>
+  <p id="err"></p>
+  <button id="retry" style="display:none">Retry</button>
+</main>
+<script>
+// ONE place to edit: where the Home Assistant dashboard lives (HA is on the XPS laptop, plain http on port 80).
+var HA_URL = 'http://192.168.3.95/';
+var HA_TIMEOUT_MS = 5000;
+
+function setErr(t) { var e = document.getElementById('err'); e.textContent = t; e.style.display = 'block'; document.getElementById('retry').style.display = 'inline-block'; document.getElementById('msg').style.display = 'none'; }
+
+function openHA() {
+  document.getElementById('err').style.display = 'none';
+  document.getElementById('retry').style.display = 'none';
+  document.getElementById('msg').style.display = 'block';
+  var ctl = ('AbortController' in window) ? new AbortController() : null;
+  var timer = setTimeout(function () { if (ctl) ctl.abort(); }, HA_TIMEOUT_MS);
+  // no-cors: resolves (opaque) when the server answers, rejects only on a real network failure
+  fetch(HA_URL, { mode: 'no-cors', signal: ctl ? ctl.signal : undefined })
+    .then(function () { clearTimeout(timer); window.location.href = HA_URL; })
+    .catch(function () { clearTimeout(timer); setErr('Home Assistant at ' + HA_URL + ' did not answer. Check the laptop (192.168.3.96) and press OK to retry.'); });
+}
+
+document.getElementById('retry').addEventListener('click', openHA);
+document.addEventListener('keydown', function (e) { if (e.keyCode === 13) openHA(); });   // OK / Enter on the remote
+openHA();
+</script>
+</body>
+</html>
